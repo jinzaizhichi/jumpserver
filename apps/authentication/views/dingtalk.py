@@ -47,15 +47,7 @@ class DingTalkBaseMixin(UserConfirmRequiredExceptionMixin, PermissionsMixin, Fla
             )
 
     def verify_state(self):
-        state = self.request.GET.get('state')
-        session_state = self.request.session.get(DINGTALK_STATE_SESSION_KEY)
-        if state != session_state:
-            return False
-        return True
-
-    def get_verify_state_failed_response(self, redirect_uri):
-        msg = _("The system configuration is incorrect. Please contact your administrator")
-        return self.get_failed_response(redirect_uri, msg, msg)
+        return self.verify_state_with_session_key(DINGTALK_STATE_SESSION_KEY)
 
     def get_already_bound_response(self, redirect_url):
         msg = _('DingTalk is already bound')
@@ -183,6 +175,8 @@ class DingTalkQRLoginView(DingTalkQRMixin, METAMixin, View):
 
     def get(self, request: HttpRequest):
         redirect_url = request.GET.get('redirect_url') or reverse('index')
+        query_string = request.GET.urlencode()
+        redirect_url = f'{redirect_url}?{query_string}'
         next_url = self.get_next_url_from_meta() or reverse('index')
         next_url = safe_next_url(next_url, request=request)
 

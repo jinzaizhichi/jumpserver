@@ -37,15 +37,7 @@ class SlackMixin(UserConfirmRequiredExceptionMixin, PermissionsMixin, FlashMessa
             )
 
     def verify_state(self):
-        state = self.request.GET.get('state')
-        session_state = self.request.session.get(SLACK_STATE_SESSION_KEY)
-        if state != session_state:
-            return False
-        return True
-
-    def get_verify_state_failed_response(self, redirect_uri):
-        msg = _("The system configuration is incorrect. Please contact your administrator")
-        return self.get_failed_response(redirect_uri, msg, msg)
+        return self.verify_state_with_session_key(SLACK_STATE_SESSION_KEY)
 
     def get_qr_url(self, redirect_uri):
         state = random_string(16)
@@ -106,6 +98,8 @@ class SlackQRLoginView(SlackMixin, View):
 
     def get(self, request: Request):
         redirect_url = request.GET.get('redirect_url') or reverse('index')
+        query_string = request.GET.urlencode()
+        redirect_url = f'{redirect_url}?{query_string}'
         redirect_uri = reverse('authentication:slack-qr-login-callback', external=True)
         redirect_uri += '?' + urlencode({
             'redirect_url': redirect_url,
